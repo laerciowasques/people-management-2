@@ -75,10 +75,22 @@ const Auth = {
     const { data, error } = await this.client.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { full_name: fullName.trim() } }
+      options: {
+        data: { full_name: fullName.trim() },
+        emailRedirectTo: this.getRedirectUrl()
+      }
     });
     if (error) throw error;
     return data;
+  },
+
+  async resendSignupConfirmation(email) {
+    const { error } = await this.client.auth.resend({
+      type: 'signup',
+      email: email.trim().toLowerCase(),
+      options: { emailRedirectTo: this.getRedirectUrl() }
+    });
+    if (error) throw error;
   },
 
   async signIn(email, password) {
@@ -427,7 +439,10 @@ function initAuthUI() {
       const { user, session } = await Auth.signUp(email, password, name);
       if (user && !session) {
         setAuthError('');
-        showPendingScreen('Cadastro realizado! Verifique seu e-mail e aguarde aprovação do administrador.');
+        showPendingScreen(
+          'Cadastro realizado! Confirme seu e-mail (link enviado) e aguarde aprovação do administrador.',
+          email
+        );
         return;
       }
       await Auth.refresh();
@@ -500,6 +515,23 @@ function initAuthUI() {
     location.reload();
   });
 
+  document.getElementById('btn-resend-confirmation')?.addEventListener('click', async () => {
+    const email = document.getElementById('pending-resend-email')?.textContent?.trim();
+    const statusEl = document.getElementById('pending-resend-status');
+    const btn = document.getElementById('btn-resend-confirmation');
+    if (!email) return;
+    btn.disabled = true;
+    if (statusEl) { statusEl.hidden = false; statusEl.textContent = 'Enviando...'; }
+    try {
+      await Auth.resendSignupConfirmation(email);
+      if (statusEl) statusEl.textContent = 'E-mail reenviado! Verifique spam/lixo eletrônico.';
+    } catch (err) {
+      if (statusEl) statusEl.textContent = err.message || 'Erro ao reenviar. Tente novamente em alguns minutos.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('btn-rejected-logout')?.addEventListener('click', async () => {
     await Auth.signOut();
     location.reload();
@@ -512,9 +544,19 @@ function showAuthScreen() {
   showScreen('auth-screen');
 }
 
-function showPendingScreen(msg) {
+function showPendingScreen(msg, signupEmail = null) {
   const el = document.getElementById('pending-message');
+  const title = document.getElementById('pending-title');
+  const tips = document.getElementById('pending-email-tips');
+  const emailEl = document.getElementById('pending-resend-email');
+  const statusEl = document.getElementById('pending-resend-status');
+
   if (el && msg) el.textContent = msg;
+  if (title) title.textContent = signupEmail ? 'Confirme seu e-mail' : 'Aguardando aprovação';
+  if (tips) tips.hidden = !signupEmail;
+  if (emailEl && signupEmail) emailEl.textContent = signupEmail;
+  if (statusEl) statusEl.hidden = true;
+
   showScreen('pending-screen');
 }
 

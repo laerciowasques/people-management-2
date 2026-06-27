@@ -86,6 +86,31 @@ Copie `supabase-config.example.js` para `supabase-config.js` e preencha URL e an
 
 Cadastre-se com `laercio_wasques@yahoo.com.br` — o trigger SQL aprova automaticamente com role `admin`.
 
+### 6. E-mail não chega (Yahoo, Outlook, etc.)
+
+O Supabase usa servidor padrão com **baixa entrega** para Yahoo. Opções:
+
+**Opção A — Desativar confirmação de e-mail (recomendado para uso interno):**
+1. Supabase → **Authentication → Providers → Email**
+2. Desmarque **Confirm email**
+3. Salve — usuários entram direto após cadastro (admin ainda aprova novos)
+
+**Opção B — Confirmar manualmente no Supabase:**
+1. **Authentication → Users** → clique no usuário → **Confirm user**
+
+**Opção C — SMTP próprio (melhor entrega):**
+1. Supabase → **Project Settings → Authentication → SMTP Settings**
+2. Configure SendGrid, Resend ou Gmail SMTP
+
+### 7. Aviso "Perigoso" no Chrome
+
+A tarja vermelha **não vem do código do app** — o Google Safe Browsing pode marcar subdomínios `.vercel.app` por falso positivo.
+
+**Soluções:**
+1. Solicitar revisão: [Reportar erro ao Google Safe Browsing](https://safebrowsing.google.com/safebrowsing/report_error/)
+2. Usar **domínio próprio** no Vercel (ex: `pm.seudominio.com.br`) — reduz bloqueios
+3. Enquanto isso, clique em **Detalhes → Visitar este site não seguro** (se confiar no link)
+
 ## Configurar empresa e logo
 
 1. Acesse **Empresa** no menu lateral

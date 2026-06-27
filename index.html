@@ -104,8 +104,18 @@
   <div id="pending-screen" class="auth-screen pending-screen" hidden>
     <div class="auth-card auth-card-narrow">
       <div class="auth-status-icon">⏳</div>
-      <h2>Aguardando aprovação</h2>
+      <h2 id="pending-title">Aguardando aprovação</h2>
       <p id="pending-message">Seu cadastro foi recebido. O administrador irá analisar e liberar seu acesso em breve.</p>
+      <div id="pending-email-tips" class="pending-tips" hidden>
+        <p><strong>Não recebeu o e-mail?</strong></p>
+        <ul>
+          <li>Verifique a pasta <strong>Spam / Lixo eletrônico</strong></li>
+          <li>Yahoo e Outlook costumam bloquear e-mails do Supabase — aguarde até 10 minutos</li>
+          <li>Confirme o endereço: <strong id="pending-resend-email"></strong></li>
+        </ul>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-resend-confirmation">Reenviar e-mail de confirmação</button>
+        <p id="pending-resend-status" class="auth-hint" hidden></p>
+      </div>
       <p class="auth-hint">Administrador: laercio_wasques@yahoo.com.br</p>
       <button type="button" class="btn btn-secondary" id="btn-pending-logout">Sair</button>
     </div>
