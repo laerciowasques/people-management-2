@@ -38,46 +38,89 @@
         <span class="brand-version">2.0</span>
       </div>
     </div>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item active" data-section="dashboard">
-        <span class="nav-icon">📊</span><span>Dashboard</span>
-      </a>
-      <a href="#" class="nav-item" data-section="company">
-        <span class="nav-icon">🏢</span><span>Empresa</span>
-      </a>
-      <a href="#" class="nav-item" data-section="employees">
-        <span class="nav-icon">👥</span><span>Colaboradores</span>
-      </a>
-      <a href="#" class="nav-item" data-section="gallery">
-        <span class="nav-icon">🎯</span><span>Galeria do Time</span>
-      </a>
-      <a href="#" class="nav-item" data-section="inputs">
-        <span class="nav-icon">📝</span><span>Inputs do Gestor</span>
-      </a>
-      <a href="#" class="nav-item" data-section="timeline">
-        <span class="nav-icon">📅</span><span>Timeline</span>
-      </a>
-      <a href="#" class="nav-item" data-section="challenges">
-        <span class="nav-icon">⚡</span><span>Desafios</span>
-      </a>
-      <a href="#" class="nav-item" data-section="compass">
-        <span class="nav-icon">🧭</span><span>Bússola Executiva</span>
-      </a>
-      <a href="#" class="nav-item" data-section="nr1">
-        <span class="nav-icon">🛡️</span><span>NR-1 & Saúde Org.</span>
-      </a>
-      <a href="#" class="nav-item" data-section="summary">
-        <span class="nav-icon">📋</span><span>Síntese Executiva</span>
-      </a>
-      <a href="#" class="nav-item" data-section="governance">
-        <span class="nav-icon">⚖️</span><span>Governança & LGPD</span>
-      </a>
-      <a href="#" class="nav-item" data-section="data">
-        <span class="nav-icon">💾</span><span>Dados & Backup</span>
-      </a>
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <div class="nav-standalone">
+        <a href="#" class="nav-item active" data-section="dashboard">
+          <span class="nav-icon">📊</span><span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-section="company">
+          <span class="nav-icon">🏢</span><span>Empresa</span>
+        </a>
+      </div>
+
+      <div class="nav-category" data-category="team">
+        <button class="nav-category-btn" type="button" aria-expanded="false">
+          <span class="nav-category-icon">👥</span>
+          <span class="nav-category-label">Gestão do Time</span>
+          <span class="nav-category-chevron"></span>
+        </button>
+        <div class="nav-category-items">
+          <div class="nav-category-items-inner">
+          <a href="#" class="nav-item" data-section="employees">
+            <span class="nav-icon">👥</span><span>Colaboradores</span>
+          </a>
+          <a href="#" class="nav-item" data-section="gallery">
+            <span class="nav-icon">🎯</span><span>Galeria do Time</span>
+          </a>
+          <a href="#" class="nav-item" data-section="inputs">
+            <span class="nav-icon">📝</span><span>Inputs do Gestor</span>
+          </a>
+          <a href="#" class="nav-item" data-section="timeline">
+            <span class="nav-icon">📅</span><span>Timeline</span>
+          </a>
+          <a href="#" class="nav-item" data-section="challenges">
+            <span class="nav-icon">⚡</span><span>Desafios</span>
+          </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-category" data-category="analysis">
+        <button class="nav-category-btn" type="button" aria-expanded="false">
+          <span class="nav-category-icon">🧭</span>
+          <span class="nav-category-label">Análise Executiva</span>
+          <span class="nav-category-chevron"></span>
+        </button>
+        <div class="nav-category-items">
+          <div class="nav-category-items-inner">
+          <a href="#" class="nav-item" data-section="nr1">
+            <span class="nav-icon">🛡️</span><span>NR-1 & Saúde Org.</span>
+          </a>
+          <a href="#" class="nav-item" data-section="summary">
+            <span class="nav-icon">📋</span><span>Síntese Executiva</span>
+          </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-category" data-category="governance">
+        <button class="nav-category-btn" type="button" aria-expanded="false">
+          <span class="nav-category-icon">⚖️</span>
+          <span class="nav-category-label">Governança & Dados</span>
+          <span class="nav-category-chevron"></span>
+        </button>
+        <div class="nav-category-items">
+          <div class="nav-category-items-inner">
+          <a href="#" class="nav-item" data-section="compass">
+            <span class="nav-icon">📚</span><span>Biblioteca do Conhecimento BE</span>
+          </a>
+          <a href="#" class="nav-item" data-section="governance">
+            <span class="nav-icon">⚖️</span><span>Governança & LGPD</span>
+          </a>
+          <a href="#" class="nav-item" data-section="data">
+            <span class="nav-icon">💾</span><span>Dados & Backup</span>
+          </a>
+          </div>
+        </div>
+      </div>
     </nav>
     <div class="sidebar-footer">
-      <small>Bússola Executiva</small>
+      <a href="https://www.linkedin.com/in/laerciowasques/" target="_blank" rel="noopener noreferrer" class="powered-by">
+        <span class="powered-by-avatar-wrap">
+          <img src="assets/laercio-wasques.png" alt="Laercio Wasques" class="powered-by-avatar">
+        </span>
+        <span class="powered-by-text">Powered by <strong>Laercio Wasques</strong></span>
+      </a>
     </div>
   </aside>
 
@@ -246,12 +289,12 @@
         <div id="challenges-grid" class="challenges-grid"></div>
       </section>
 
-      <!-- BÚSSOLA -->
+      <!-- BIBLIOTECA BE -->
       <section id="section-compass" class="section">
         <div class="section-header flex-between">
           <div>
-            <h2>Repositório Bússola Executiva</h2>
-            <p class="section-subtitle">Materiais de apoio para desenvolvimento</p>
+            <h2>Biblioteca do Conhecimento BE</h2>
+            <p class="section-subtitle">Materiais de apoio da Bússola Executiva para desenvolvimento</p>
           </div>
           <button class="btn btn-primary" id="btn-new-material">+ Novo Material</button>
         </div>

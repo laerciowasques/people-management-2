@@ -26,7 +26,7 @@ const LABELS = {
     treinamento_recomendado: 'Treinamento Recomendado', reconhecimento: 'Reconhecimento',
     alerta_risco: 'Alerta de Risco', plano_acao_criado: 'Plano de Ação Criado',
     evolucao_observada: 'Evolução Observada', reuniao_alinhamento: 'Reunião de Alinhamento',
-    follow_up_pendente: 'Follow-up Pendente', material_bussola: 'Material Bússola Recomendado'
+    follow_up_pendente: 'Follow-up Pendente', material_bussola: 'Material Biblioteca BE Recomendado'
   },
   challengeCategory: {
     ponto_desenvolvimento: 'Ponto de Desenvolvimento', oportunidade_carreira: 'Oportunidade de Carreira',
@@ -181,24 +181,79 @@ function applyTheme() {
 
 // ─── Navegação ──────────────────────────────────────────────────
 
+const NAV_CATEGORIES_KEY = 'pm20_nav_categories';
+
+function navigateToSection(sec) {
+  const item = document.querySelector(`.nav-item[data-section="${sec}"]`);
+  if (!item) return;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  item.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`section-${sec}`).classList.add('active');
+  renderSection(sec);
+  expandCategoryForSection(sec);
+  saveNavCategoriesState();
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function setCategoryExpanded(categoryEl, expanded) {
+  if (!categoryEl) return;
+  categoryEl.classList.toggle('expanded', expanded);
+  const btn = categoryEl.querySelector('.nav-category-btn');
+  if (btn) btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+}
+
+function expandCategoryForSection(sec) {
+  const item = document.querySelector(`.nav-item[data-section="${sec}"]`);
+  const category = item?.closest('.nav-category');
+  if (category) setCategoryExpanded(category, true);
+}
+
+function saveNavCategoriesState() {
+  const state = {};
+  document.querySelectorAll('.nav-category').forEach(cat => {
+    state[cat.dataset.category] = cat.classList.contains('expanded');
+  });
+  try { localStorage.setItem(NAV_CATEGORIES_KEY, JSON.stringify(state)); } catch (_) {}
+}
+
+function loadNavCategoriesState() {
+  try {
+    const raw = localStorage.getItem(NAV_CATEGORIES_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    document.querySelectorAll('.nav-category').forEach(cat => {
+      const key = cat.dataset.category;
+      if (key in state) setCategoryExpanded(cat, state[key]);
+    });
+    return true;
+  } catch { return false; }
+}
+
 function initNavigation() {
+  document.querySelectorAll('.nav-category-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const category = btn.closest('.nav-category');
+      const willExpand = !category.classList.contains('expanded');
+      setCategoryExpanded(category, willExpand);
+      saveNavCategoriesState();
+    });
+  });
+
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', e => {
       e.preventDefault();
-      const sec = item.dataset.section;
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(`section-${sec}`).classList.add('active');
-      renderSection(sec);
-      document.getElementById('sidebar').classList.remove('open');
+      navigateToSection(item.dataset.section);
     });
   });
+
+  loadNavCategoriesState();
+
   document.getElementById('menu-toggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
   });
   document.getElementById('btn-quick-summary').addEventListener('click', () => {
-    document.querySelector('[data-section="summary"]').click();
+    navigateToSection('summary');
     generateExecutiveSummary();
   });
 }
@@ -913,7 +968,7 @@ document.getElementById('btn-new-challenge').addEventListener('click', () => {
      <button class="btn btn-primary" onclick="saveChallenge()">Criar</button>`, true);
 });
 
-// ─── Bússola Executiva ─────────────────────────────────────────
+// ─── Biblioteca do Conhecimento BE ─────────────────────────────
 
 function renderCompass() {
   document.getElementById('filter-material-theme').innerHTML = '<option value="">Todos os temas</option>' +
@@ -999,7 +1054,7 @@ window.deleteMaterial = function(id) {
 };
 
 document.getElementById('btn-new-material').addEventListener('click', () => {
-  openModal('Novo Material Bússola', materialFormHTML(),
+  openModal('Novo Material — Biblioteca BE', materialFormHTML(),
     `<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
      <button class="btn btn-primary" onclick="saveMaterial()">Cadastrar</button>`, true);
 });
@@ -1111,7 +1166,7 @@ function generateExecutiveSummary() {
   text += `2. Revisar planos de ação abertos (${openActions.length} em andamento).\n`;
   text += `3. Reconhecer publicamente evoluções de ${highlights.map(e=>e.name.split(' ')[0]).join(', ') || 'colaboradores em destaque'}.\n`;
   text += `4. Endereçar ${risks.length} risco(s) de alta urgência.\n`;
-  text += `5. Aplicar materiais da Bússola Executiva conforme mapeamento individual.\n\n`;
+  text += `5. Aplicar materiais da Biblioteca do Conhecimento BE conforme mapeamento individual.\n\n`;
 
   text += `MENSAGEM EXECUTIVA\n${'-'.repeat(30)}\n`;
   text += `O time ${company.team_name || ''} apresenta ${emps.length} colaboradores com média técnica de ${avg(emps.map(e=>e.technical_level))} e comportamental de ${avg(emps.map(e=>e.behavioral_level))}. `;
