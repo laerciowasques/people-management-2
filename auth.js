@@ -268,20 +268,38 @@ function setAuthError(msg) {
   }
 }
 
+const AUTH_TAB_DESC = {
+  login: 'Já possui acesso aprovado? Entre com seu e-mail e senha.',
+  signup: 'Primeiro acesso? Preencha os dados abaixo para solicitar liberação.'
+};
+
+let authUIReady = false;
+
+function switchAuthTab(target) {
+  const tabs = document.querySelectorAll('.auth-tab');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const desc = document.getElementById('auth-tab-desc');
+
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === target));
+  if (loginForm) loginForm.hidden = target !== 'login';
+  if (signupForm) signupForm.hidden = target !== 'signup';
+  if (desc) desc.textContent = AUTH_TAB_DESC[target] || '';
+  setAuthError('');
+}
+
 function initAuthUI() {
+  if (authUIReady) return;
+  authUIReady = true;
+
   const tabs = document.querySelectorAll('.auth-tab');
   const loginForm = document.getElementById('login-form');
   const signupForm = document.getElementById('signup-form');
 
+  switchAuthTab('login');
+
   tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      const target = tab.dataset.tab;
-      loginForm.hidden = target !== 'login';
-      signupForm.hidden = target !== 'signup';
-      setAuthError('');
-    });
+    tab.addEventListener('click', () => switchAuthTab(tab.dataset.tab));
   });
 
   loginForm?.addEventListener('submit', async e => {
@@ -349,6 +367,8 @@ function initAuthUI() {
 }
 
 function showAuthScreen() {
+  initAuthUI();
+  switchAuthTab('login');
   showScreen('auth-screen');
 }
 
@@ -467,6 +487,8 @@ window.rejectUserAccess = async function(userId) {
 };
 
 async function initAuth() {
+  initAuthUI();
+
   try {
     if (!Auth.isConfigured()) {
       document.getElementById('auth-config-warning').hidden = false;
@@ -480,8 +502,6 @@ async function initAuth() {
       setAuthError('Erro ao inicializar Supabase.');
       return false;
     }
-
-    initAuthUI();
 
     const session = await Auth.getSession();
     if (session) {

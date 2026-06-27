@@ -571,6 +571,16 @@ body {
 
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
 
+.auth-form[hidden],
+.auth-panel[hidden] { display: none !important; }
+
+.auth-tab-desc {
+  font-size: 13px;
+  color: var(--gray-text);
+  margin: -8px 0 16px;
+  line-height: 1.5;
+}
+
 .auth-hint {
   font-size: 12px;
   color: var(--gray-text);

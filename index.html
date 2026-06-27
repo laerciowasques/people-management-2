@@ -45,8 +45,9 @@
         <button type="button" class="auth-tab active" data-tab="login">Entrar</button>
         <button type="button" class="auth-tab" data-tab="signup">Solicitar acesso</button>
       </div>
+      <p id="auth-tab-desc" class="auth-tab-desc">Já possui acesso aprovado? Entre com seu e-mail e senha.</p>
       <div id="auth-error" class="auth-error" hidden></div>
-      <form id="login-form" class="auth-form">
+      <form id="login-form" class="auth-form auth-panel" data-panel="login">
         <div class="form-group">
           <label for="login-email">E-mail</label>
           <input type="email" id="login-email" placeholder="seu@email.com" required autocomplete="email">
@@ -57,7 +58,7 @@
         </div>
         <button type="submit" class="btn btn-primary btn-lg" id="btn-login">Entrar</button>
       </form>
-      <form id="signup-form" class="auth-form" hidden>
+      <form id="signup-form" class="auth-form auth-panel" data-panel="signup" hidden>
         <div class="form-group">
           <label for="signup-name">Nome completo</label>
           <input type="text" id="signup-name" placeholder="Seu nome" required autocomplete="name">
