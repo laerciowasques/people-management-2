@@ -98,6 +98,37 @@ const Auth = {
     this.profile = null;
   },
 
+  getRedirectUrl() {
+    return `${window.location.origin}${window.location.pathname}`;
+  },
+
+  async resetPasswordForEmail(email) {
+    const { error } = await this.client.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: this.getRedirectUrl() }
+    );
+    if (error) throw error;
+  },
+
+  async updatePassword(newPassword) {
+    const { data, error } = await this.client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return data;
+  },
+
+  isRecoveryFromUrl() {
+    const hash = window.location.hash.replace(/^#/, '');
+    if (!hash) return false;
+    const params = new URLSearchParams(hash);
+    return params.get('type') === 'recovery';
+  },
+
+  clearRecoveryHash() {
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  },
+
   async listPendingUsers() {
     if (!this.isAdmin()) throw new Error('Sem permissão');
     const { data, error } = await this.client
@@ -262,31 +293,89 @@ function showScreen(id) {
 
 function setAuthError(msg) {
   const el = document.getElementById('auth-error');
+  const ok = document.getElementById('auth-success');
+  if (ok) ok.hidden = true;
   if (el) {
     el.textContent = msg || '';
     el.hidden = !msg;
   }
 }
 
+function setAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  const err = document.getElementById('auth-error');
+  if (err) err.hidden = true;
+  if (el) {
+    el.textContent = msg || '';
+    el.hidden = !msg;
+  }
+}
+
+function clearAuthMessages() {
+  setAuthError('');
+  setAuthSuccess('');
+}
+
 const AUTH_TAB_DESC = {
   login: 'Já possui acesso aprovado? Entre com seu e-mail e senha.',
-  signup: 'Primeiro acesso? Preencha os dados abaixo para solicitar liberação.'
+  signup: 'Primeiro acesso? Preencha os dados abaixo para solicitar liberação.',
+  forgot: 'Informe seu e-mail para receber o link de redefinição de senha.',
+  reset: 'Defina sua nova senha abaixo.'
 };
 
-let authUIReady = false;
+const AUTH_PANELS = ['login-form', 'signup-form', 'forgot-form', 'reset-form'];
+
+function hideAllAuthPanels() {
+  AUTH_PANELS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = true;
+  });
+}
+
+function setAuthTabsVisible(visible) {
+  const tabs = document.querySelector('.auth-tabs');
+  if (tabs) tabs.hidden = !visible;
+}
 
 function switchAuthTab(target) {
+  hideAllAuthPanels();
+  setAuthTabsVisible(true);
+
   const tabs = document.querySelectorAll('.auth-tab');
-  const loginForm = document.getElementById('login-form');
-  const signupForm = document.getElementById('signup-form');
   const desc = document.getElementById('auth-tab-desc');
 
   tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === target));
-  if (loginForm) loginForm.hidden = target !== 'login';
-  if (signupForm) signupForm.hidden = target !== 'signup';
+  const form = document.getElementById(`${target}-form`);
+  if (form) form.hidden = false;
   if (desc) desc.textContent = AUTH_TAB_DESC[target] || '';
-  setAuthError('');
+  clearAuthMessages();
 }
+
+function showForgotPassword() {
+  hideAllAuthPanels();
+  setAuthTabsVisible(false);
+  const desc = document.getElementById('auth-tab-desc');
+  const forgotForm = document.getElementById('forgot-form');
+  const loginEmail = document.getElementById('login-email')?.value?.trim();
+  if (desc) desc.textContent = AUTH_TAB_DESC.forgot;
+  if (forgotForm) forgotForm.hidden = false;
+  if (loginEmail) document.getElementById('forgot-email').value = loginEmail;
+  clearAuthMessages();
+  showScreen('auth-screen');
+}
+
+function showResetPasswordForm() {
+  hideAllAuthPanels();
+  setAuthTabsVisible(false);
+  const desc = document.getElementById('auth-tab-desc');
+  const resetForm = document.getElementById('reset-form');
+  if (desc) desc.textContent = AUTH_TAB_DESC.reset;
+  if (resetForm) resetForm.hidden = false;
+  clearAuthMessages();
+  showScreen('auth-screen');
+}
+
+let authUIReady = false;
 
 function initAuthUI() {
   if (authUIReady) return;
@@ -345,6 +434,57 @@ function initAuthUI() {
       await handleAuthSuccess();
     } catch (err) {
       setAuthError(err.message || 'Erro ao cadastrar.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('btn-forgot-password')?.addEventListener('click', showForgotPassword);
+
+  document.getElementById('btn-forgot-back')?.addEventListener('click', () => switchAuthTab('login'));
+
+  document.getElementById('forgot-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    clearAuthMessages();
+    const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+    const btn = document.getElementById('btn-forgot-submit');
+    btn.disabled = true;
+    try {
+      await Auth.resetPasswordForEmail(email);
+      setAuthSuccess('Link enviado! Verifique sua caixa de entrada (e spam) e clique no link para definir uma nova senha.');
+      document.getElementById('forgot-form').reset();
+    } catch (err) {
+      setAuthError(err.message || 'Erro ao enviar link de recuperação.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('reset-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    clearAuthMessages();
+    const pwd = document.getElementById('reset-password').value;
+    const confirm = document.getElementById('reset-password-confirm').value;
+    if (pwd.length < 6) {
+      setAuthError('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+    if (pwd !== confirm) {
+      setAuthError('As senhas não coincidem.');
+      return;
+    }
+    const btn = document.getElementById('btn-reset-submit');
+    btn.disabled = true;
+    try {
+      await Auth.updatePassword(pwd);
+      Auth.clearRecoveryHash();
+      setAuthSuccess('Senha alterada com sucesso! Redirecionando...');
+      await Auth.refresh();
+      setTimeout(async () => {
+        await handleAuthSuccess();
+      }, 1500);
+    } catch (err) {
+      setAuthError(err.message || 'Erro ao salvar nova senha.');
     } finally {
       btn.disabled = false;
     }
@@ -501,6 +641,16 @@ async function initAuth() {
       showAuthScreen();
       setAuthError('Erro ao inicializar Supabase.');
       return false;
+    }
+
+    Auth.client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') showResetPasswordForm();
+    });
+
+    if (Auth.isRecoveryFromUrl()) {
+      await Auth.getSession();
+      showResetPasswordForm();
+      return true;
     }
 
     const session = await Auth.getSession();

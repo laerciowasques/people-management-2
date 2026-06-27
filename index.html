@@ -47,6 +47,7 @@
       </div>
       <p id="auth-tab-desc" class="auth-tab-desc">Já possui acesso aprovado? Entre com seu e-mail e senha.</p>
       <div id="auth-error" class="auth-error" hidden></div>
+      <div id="auth-success" class="auth-success" hidden></div>
       <form id="login-form" class="auth-form auth-panel" data-panel="login">
         <div class="form-group">
           <label for="login-email">E-mail</label>
@@ -56,7 +57,30 @@
           <label for="login-password">Senha</label>
           <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
         </div>
+        <p class="auth-forgot-wrap">
+          <button type="button" class="auth-forgot-link" id="btn-forgot-password">Esqueci minha senha</button>
+        </p>
         <button type="submit" class="btn btn-primary btn-lg" id="btn-login">Entrar</button>
+      </form>
+      <form id="forgot-form" class="auth-form auth-panel" data-panel="forgot" hidden>
+        <div class="form-group">
+          <label for="forgot-email">E-mail cadastrado</label>
+          <input type="email" id="forgot-email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        <p class="auth-hint">Enviaremos um link para redefinir sua senha. Disponível apenas para usuários com acesso já aprovado.</p>
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-forgot-submit">Enviar link de recuperação</button>
+        <button type="button" class="btn btn-secondary" id="btn-forgot-back">Voltar ao login</button>
+      </form>
+      <form id="reset-form" class="auth-form auth-panel" data-panel="reset" hidden>
+        <div class="form-group">
+          <label for="reset-password">Nova senha</label>
+          <input type="password" id="reset-password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="reset-password-confirm">Confirmar nova senha</label>
+          <input type="password" id="reset-password-confirm" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-reset-submit">Salvar nova senha</button>
       </form>
       <form id="signup-form" class="auth-form auth-panel" data-panel="signup" hidden>
         <div class="form-group">

@@ -79,7 +79,8 @@ Copie `supabase-config.example.js` para `supabase-config.js` e preencha URL e an
 1. Usuário solicita cadastro em **Solicitar acesso**
 2. Admin entra em **Governança & Dados → Gestão de Acesso** e aprova/recusa
 3. Usuário aprovado faz login, configura a empresa e usa a plataforma
-4. Dados sincronizam na tabela `app_data` do Supabase
+4. **Esqueci minha senha** (aba Entrar) envia link por e-mail para redefinir a senha
+5. Dados sincronizam na tabela `app_data` do Supabase
 
 ### 5. Primeiro acesso do administrador
 
