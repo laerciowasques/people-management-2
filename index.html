@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>People Management 2.0</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Fundo tecnológico animado -->
+  <div class="tech-bg" aria-hidden="true">
+    <canvas id="tech-canvas"></canvas>
+    <div class="tech-bg-hex"></div>
+    <div class="tech-bg-grid"></div>
+    <div class="tech-bg-circuit"></div>
+    <div class="tech-bg-glow tech-bg-glow-1"></div>
+    <div class="tech-bg-glow tech-bg-glow-2"></div>
+    <div class="tech-bg-glow tech-bg-glow-3"></div>
+    <div class="tech-bg-lines"></div>
+    <div class="tech-bg-scanline"></div>
+    <div class="tech-bg-pulse tech-bg-pulse-1"></div>
+    <div class="tech-bg-pulse tech-bg-pulse-2"></div>
+    <div class="tech-bg-pulse tech-bg-pulse-3"></div>
+    <div class="tech-bg-vignette"></div>
+  </div>
+
+  <!-- SUPABASE: Autenticação e sessão do usuário serão verificadas aqui -->
+  <div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">PM</div>
+      <div class="brand-text">
+        <span class="brand-title">People Management</span>
+        <span class="brand-version">2.0</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="dashboard">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-section="company">
+        <span class="nav-icon">🏢</span><span>Empresa</span>
+      </a>
+      <a href="#" class="nav-item" data-section="employees">
+        <span class="nav-icon">👥</span><span>Colaboradores</span>
+      </a>
+      <a href="#" class="nav-item" data-section="gallery">
+        <span class="nav-icon">🎯</span><span>Galeria do Time</span>
+      </a>
+      <a href="#" class="nav-item" data-section="inputs">
+        <span class="nav-icon">📝</span><span>Inputs do Gestor</span>
+      </a>
+      <a href="#" class="nav-item" data-section="timeline">
+        <span class="nav-icon">📅</span><span>Timeline</span>
+      </a>
+      <a href="#" class="nav-item" data-section="challenges">
+        <span class="nav-icon">⚡</span><span>Desafios</span>
+      </a>
+      <a href="#" class="nav-item" data-section="compass">
+        <span class="nav-icon">🧭</span><span>Bússola Executiva</span>
+      </a>
+      <a href="#" class="nav-item" data-section="nr1">
+        <span class="nav-icon">🛡️</span><span>NR-1 & Saúde Org.</span>
+      </a>
+      <a href="#" class="nav-item" data-section="summary">
+        <span class="nav-icon">📋</span><span>Síntese Executiva</span>
+      </a>
+      <a href="#" class="nav-item" data-section="governance">
+        <span class="nav-icon">⚖️</span><span>Governança & LGPD</span>
+      </a>
+      <a href="#" class="nav-item" data-section="data">
+        <span class="nav-icon">💾</span><span>Dados & Backup</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <small>Bússola Executiva</small>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header class="header" id="app-header">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Menu">☰</button>
+      <div class="header-company">
+        <img id="header-logo" class="header-logo" src="" alt="Logo" hidden>
+        <div class="header-info">
+          <h1 id="header-company-name">People Management 2.0</h1>
+          <p id="header-team-info">Configure sua empresa para começar</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm" id="btn-quick-summary">Síntese Rápida</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- DASHBOARD -->
+      <section id="section-dashboard" class="section active">
+        <div class="section-header">
+          <h2>Dashboard Executivo</h2>
+          <p class="section-subtitle" id="dashboard-subtitle">Visão consolidada do time</p>
+        </div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="charts-grid">
+          <div class="chart-card"><h3>Evolução Técnica Média</h3><canvas id="chart-technical"></canvas></div>
+          <div class="chart-card"><h3>Evolução Comportamental Média</h3><canvas id="chart-behavioral"></canvas></div>
+          <div class="chart-card"><h3>Distribuição por Status</h3><canvas id="chart-status"></canvas></div>
+          <div class="chart-card"><h3>Distribuição por Área</h3><canvas id="chart-area"></canvas></div>
+          <div class="chart-card"><h3>Ações Abertas vs. Concluídas</h3><canvas id="chart-actions"></canvas></div>
+          <div class="chart-card"><h3>Principais Oportunidades</h3><canvas id="chart-opportunities"></canvas></div>
+        </div>
+      </section>
+
+      <!-- EMPRESA -->
+      <section id="section-company" class="section">
+        <div class="section-header">
+          <h2>Configuração da Empresa</h2>
+          <p class="section-subtitle">Personalize a identidade visual e dados do seu time</p>
+        </div>
+        <div class="card form-card">
+          <form id="company-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="company-name">Nome da Empresa</label>
+                <input type="text" id="company-name" placeholder="Ex: TechNova Soluções" required>
+              </div>
+              <div class="form-group">
+                <label for="manager-name">Gestor Responsável</label>
+                <input type="text" id="manager-name" placeholder="Ex: Ana Carolina Mendes">
+              </div>
+              <div class="form-group">
+                <label for="team-name">Área / Time</label>
+                <input type="text" id="team-name" placeholder="Ex: Engenharia de Produto">
+              </div>
+              <div class="form-group">
+                <label for="primary-color">Cor Principal</label>
+                <input type="color" id="primary-color" value="#1a3a5c">
+              </div>
+              <div class="form-group full-width">
+                <label for="company-logo">Logo da Empresa</label>
+                <input type="file" id="company-logo" accept="image/*">
+                <div id="logo-preview" class="logo-preview"></div>
+              </div>
+            </div>
+            <p class="form-hint">As alterações são salvas automaticamente no navegador.</p>
+          </form>
+        </div>
+      </section>
+
+      <!-- COLABORADORES -->
+      <section id="section-employees" class="section">
+        <div class="section-header flex-between">
+          <div>
+            <h2>Cadastro de Colaboradores</h2>
+            <p class="section-subtitle">Gerencie os membros do seu time</p>
+          </div>
+          <button class="btn btn-primary" id="btn-new-employee">+ Novo Colaborador</button>
+        </div>
+        <div class="filters-bar" id="employee-filters">
+          <input type="search" id="employee-search" placeholder="Pesquisar colaborador..." class="search-input">
+          <select id="filter-status"><option value="">Todos os status</option></select>
+          <select id="filter-area"><option value="">Todas as áreas</option></select>
+          <select id="filter-risk"><option value="">Todos os riscos</option>
+            <option value="baixo">Risco baixo</option>
+            <option value="medio">Risco médio</option>
+            <option value="alto">Risco alto</option>
+          </select>
+          <select id="filter-exec-status"><option value="">Semáforo</option>
+            <option value="verde">Verde</option>
+            <option value="amarelo">Amarelo</option>
+            <option value="vermelho">Vermelho</option>
+            <option value="azul">Azul</option>
+          </select>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="employees-table">
+            <thead>
+              <tr>
+                <th>Nome</th><th>Cargo</th><th>Área</th><th>Status</th>
+                <th>Técnico</th><th>Comport.</th><th>Semáforo</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="employees-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- GALERIA -->
+      <section id="section-gallery" class="section">
+        <div class="section-header">
+          <h2>Galeria de Status do Time</h2>
+          <p class="section-subtitle">Visão rápida de cada colaborador</p>
+        </div>
+        <div class="gallery-grid" id="gallery-grid"></div>
+      </section>
+
+      <!-- INPUTS -->
+      <section id="section-inputs" class="section">
+        <div class="section-header flex-between">
+          <div>
+            <h2>Inputs do Gestor</h2>
+            <p class="section-subtitle">Registros objetivos e datados por colaborador</p>
+          </div>
+          <button class="btn btn-primary" id="btn-new-input">+ Novo Input</button>
+        </div>
+        <div class="filters-bar">
+          <select id="filter-input-employee"><option value="">Todos os colaboradores</option></select>
+          <select id="filter-input-type"><option value="">Todos os tipos</option></select>
+          <select id="filter-input-status"><option value="">Todos os status</option>
+            <option value="aberto">Aberto</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+          </select>
+        </div>
+        <div id="inputs-list" class="inputs-list"></div>
+      </section>
+
+      <!-- TIMELINE -->
+      <section id="section-timeline" class="section">
+        <div class="section-header flex-between">
+          <div>
+            <h2>Timeline de Desenvolvimento</h2>
+            <p class="section-subtitle">Histórico de evolução por colaborador</p>
+          </div>
+          <button class="btn btn-primary" id="btn-new-timeline">+ Novo Evento</button>
+        </div>
+        <div class="filters-bar">
+          <select id="filter-timeline-employee"><option value="">Todos os colaboradores</option></select>
+          <select id="filter-timeline-type"><option value="">Todos os tipos</option></select>
+        </div>
+        <div id="timeline-container" class="timeline-container"></div>
+      </section>
+
+      <!-- DESAFIOS -->
+      <section id="section-challenges" class="section">
+        <div class="section-header flex-between">
+          <div>
+            <h2>Desafios e Oportunidades</h2>
+            <p class="section-subtitle">Mapeamento de desenvolvimento e riscos</p>
+          </div>
+          <button class="btn btn-primary" id="btn-new-challenge">+ Novo Desafio</button>
+        </div>
+        <div id="challenges-grid" class="challenges-grid"></div>
+      </section>
+
+      <!-- BÚSSOLA -->
+      <section id="section-compass" class="section">
+        <div class="section-header flex-between">
+          <div>
+            <h2>Repositório Bússola Executiva</h2>
+            <p class="section-subtitle">Materiais de apoio para desenvolvimento</p>
+          </div>
+          <button class="btn btn-primary" id="btn-new-material">+ Novo Material</button>
+        </div>
+        <div class="filters-bar">
+          <input type="search" id="material-search" placeholder="Pesquisar material..." class="search-input">
+          <select id="filter-material-theme"><option value="">Todos os temas</option></select>
+        </div>
+        <div id="materials-grid" class="materials-grid"></div>
+      </section>
+
+      <!-- NR-1 -->
+      <section id="section-nr1" class="section">
+        <div class="section-header">
+          <h2>NR-1 e Saúde Organizacional</h2>
+          <p class="section-subtitle">Indicadores preventivos e apoio gerencial</p>
+        </div>
+        <div class="governance-banner">
+          <p>Este painel tem finalidade gerencial, preventiva e de desenvolvimento. Os registros devem ser objetivos, respeitosos e baseados em fatos observáveis. A ferramenta não substitui avaliação de RH, Jurídico, SESMT, Saúde Ocupacional ou profissionais habilitados.</p>
+        </div>
+        <div class="kpi-grid" id="nr1-kpi-grid"></div>
+        <div id="nr1-alerts" class="nr1-alerts"></div>
+      </section>
+
+      <!-- SÍNTESE -->
+      <section id="section-summary" class="section">
+        <div class="section-header flex-between">
+          <div>
+            <h2>Síntese Executiva</h2>
+            <p class="section-subtitle">Consolidação para tomada de decisão</p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-generate-summary">Gerar Síntese Executiva</button>
+            <button class="btn btn-secondary" id="btn-copy-summary">Copiar</button>
+            <button class="btn btn-secondary" id="btn-export-txt">Exportar TXT</button>
+            <button class="btn btn-secondary" id="btn-export-pdf">Exportar PDF</button>
+          </div>
+        </div>
+        <div class="card summary-card">
+          <div id="summary-content" class="summary-content">
+            <p class="empty-state">Clique em "Gerar Síntese Executiva" para consolidar os dados do time.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- GOVERNANÇA -->
+      <section id="section-governance" class="section">
+        <div class="section-header">
+          <h2>Governança, Ética e LGPD</h2>
+          <p class="section-subtitle">Boas práticas para uso responsável da ferramenta</p>
+        </div>
+        <div class="governance-grid" id="governance-grid"></div>
+      </section>
+
+      <!-- DADOS -->
+      <section id="section-data" class="section">
+        <div class="section-header">
+          <h2>Persistência de Dados</h2>
+          <p class="section-subtitle">Backup, exportação e importação</p>
+        </div>
+        <div class="data-actions-grid">
+          <div class="card data-action-card">
+            <h3>Exportar Base Completa</h3>
+            <p>Download de todos os dados em formato JSON.</p>
+            <button class="btn btn-primary" id="btn-export-json">Exportar JSON</button>
+          </div>
+          <div class="card data-action-card">
+            <h3>Importar Base JSON</h3>
+            <p>Restaurar dados de um arquivo de backup.</p>
+            <input type="file" id="import-json" accept=".json" hidden>
+            <button class="btn btn-secondary" id="btn-import-json">Importar JSON</button>
+          </div>
+          <div class="card data-action-card">
+            <h3>Backup Manual</h3>
+            <p>Criar cópia de segurança com data no nome do arquivo.</p>
+            <button class="btn btn-secondary" id="btn-backup">Criar Backup</button>
+          </div>
+          <div class="card data-action-card danger">
+            <h3>Limpar Dados</h3>
+            <p>Remove todos os dados do navegador. Ação irreversível.</p>
+            <button class="btn btn-danger" id="btn-clear-data">Limpar Dados</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Restaurar Dados de Demonstração</h3>
+          <p>Carrega os dados mockados originais do arquivo data.json.</p>
+          <button class="btn btn-secondary" id="btn-restore-demo">Restaurar Demo</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  </div>
+
+  <!-- MODAL GENÉRICO -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Modal</h3>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
