@@ -40,8 +40,50 @@ Acesse: `http://localhost:8080`
 | `index.html`| Interface principal (SPA)                      |
 | `styles.css`| Estilos executivos e responsivos               |
 | `app.js`    | Lógica, CRUD, gráficos e persistência          |
+| `auth.js`   | Login, cadastro e aprovação de usuários        |
+| `supabase-config.js` | Credenciais Supabase (Vercel gera no deploy) |
+| `supabase/schema.sql` | Schema, RLS e trigger de aprovação      |
 | `data.json` | Dados mockados de demonstração                 |
 | `README.md` | Esta documentação                                |
+
+## Gestão de acesso (Supabase + Vercel)
+
+A plataforma em produção exige login. Novos usuários ficam com status **pending** até aprovação do administrador **laercio_wasques@yahoo.com.br**.
+
+### 1. Criar projeto no Supabase
+
+1. Acesse [supabase.com](https://supabase.com) e crie um projeto
+2. Em **SQL Editor**, execute o arquivo `supabase/schema.sql` completo
+3. Em **Authentication → Providers**, habilite **Email**
+4. Em **Authentication → URL Configuration**, adicione:
+   - Site URL: `https://people-management-2.vercel.app`
+   - Redirect URLs: `https://people-management-2.vercel.app/**` e `http://localhost:*`
+
+### 2. Variáveis no Vercel
+
+No painel do projeto Vercel → **Settings → Environment Variables**:
+
+| Variável | Valor |
+|----------|-------|
+| `SUPABASE_URL` | URL do projeto (Settings → API) |
+| `SUPABASE_ANON_KEY` | chave `anon` public |
+
+O `buildCommand` em `vercel.json` gera `supabase-config.js` automaticamente no deploy.
+
+### 3. Desenvolvimento local
+
+Copie `supabase-config.example.js` para `supabase-config.js` e preencha URL e anon key. Use `npx serve .` (não abra `index.html` direto).
+
+### 4. Fluxo de acesso
+
+1. Usuário solicita cadastro em **Solicitar acesso**
+2. Admin entra em **Governança & Dados → Gestão de Acesso** e aprova/recusa
+3. Usuário aprovado faz login, configura a empresa e usa a plataforma
+4. Dados sincronizam na tabela `app_data` do Supabase
+
+### 5. Primeiro acesso do administrador
+
+Cadastre-se com `laercio_wasques@yahoo.com.br` — o trigger SQL aprova automaticamente com role `admin`.
 
 ## Configurar empresa e logo
 
@@ -106,54 +148,23 @@ Na seção **Dados & Backup**:
 3. Cada gestor abre o `index.html` localmente ou via link compartilhado
 4. Para sincronizar dados entre dispositivos, use **Exportar JSON** e compartilhe o arquivo de backup
 
-> Na versão atual, os dados ficam no `localStorage` de cada navegador. A integração com Supabase permitirá sincronização em nuvem com isolamento por empresa.
+> Na versão atual, os dados ficam no `localStorage` e sincronizam na nuvem (`app_data`) quando o usuário está logado e aprovado.
 
 ## Evolução para Supabase
 
-A estrutura de dados já prevê campos para integração futura:
+A autenticação, aprovação de usuários e sync via `app_data` já estão implementados. O schema em `supabase/schema.sql` inclui tabelas normalizadas para migração futura dos colaboradores, inputs, timeline e demais entidades.
 
-| Campo        | Uso futuro                              |
-|-------------|-----------------------------------------|
-| `company_id`| Isolamento multiempresa (RLS)           |
-| `user_id`   | Identificação do usuário autenticado    |
-| `role`      | Perfil de acesso                        |
-| `manager_id`| Hierarquia de gestão                    |
-| `team_id`   | Segregação por time                     |
-| `created_by`| Auditoria de criação                    |
-| `updated_by`| Auditoria de atualização                |
-| `created_at`| Timestamp de criação                    |
-| `updated_at`| Timestamp de atualização                  |
+| Campo        | Uso                              |
+|-------------|----------------------------------|
+| `company_id`| Isolamento multiempresa (RLS)    |
+| `user_id`   | Usuário autenticado              |
+| `role`      | Perfil de acesso                 |
 
-### Perfis de acesso previstos
+### Perfis de acesso
 
-- Admin geral
-- Gestor da empresa
-- Gestor de time
-- RH / People Partner
-- Usuário visualizador
-
-### Tabelas sugeridas no Supabase
-
-```sql
--- companies: dados da empresa (nome, logo, cor, gestor)
--- users: usuários autenticados vinculados a company_id
--- teams: times/áreas dentro da empresa
--- employees: colaboradores com todos os indicadores
--- manager_inputs: registros datados do gestor
--- development_timeline: eventos de evolução
--- challenges: desafios e oportunidades
--- compass_materials: repositório Bússola Executiva
--- executive_summaries: histórico de sínteses geradas
--- audit_logs: trilha de auditoria para LGPD
-```
-
-Implementação futura:
-
-1. Autenticação via Supabase Auth
-2. Row Level Security (RLS) por `company_id`
-3. Políticas de acesso por `role`
-4. Substituição do `localStorage` por chamadas à API
-5. Pontos marcados no código com `[SUPABASE]`
+- **admin** — aprova novos usuários (`laercio_wasques@yahoo.com.br`)
+- **company_manager** — gestor da empresa (padrão)
+- team_manager, hr, viewer — previstos no schema
 
 ## LGPD, ética e governança
 
@@ -179,8 +190,9 @@ O `data.json` inclui:
 
 - HTML5, CSS3, JavaScript (vanilla)
 - Chart.js (CDN) para gráficos
-- localStorage para persistência local
-- Sem dependências pagas
+- Supabase Auth + PostgreSQL (RLS) para acesso e nuvem
+- localStorage como cache local + sync `app_data`
+- Deploy: Vercel (estático)
 
 ## Suporte
 

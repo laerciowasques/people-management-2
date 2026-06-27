@@ -7,7 +7,15 @@
  */
 
 const STORAGE_KEY = 'pm20_data';
+const ONBOARDING_KEY = 'pm20_onboarding_done';
 const CHARTS = {};
+
+function getOnboardingKey() {
+  if (typeof Auth !== 'undefined' && Auth.user?.id) {
+    return `${ONBOARDING_KEY}_${Auth.user.id}`;
+  }
+  return ONBOARDING_KEY;
+}
 
 const LABELS = {
   status: {
@@ -73,10 +81,13 @@ function generateId(prefix) {
 function nowISO() { return new Date().toISOString(); }
 
 function metaFields(overrides = {}) {
+  const userId = (typeof Auth !== 'undefined' && Auth.user?.id) || state.company?.user_id || 'user-local';
+  const companyId = (typeof Auth !== 'undefined' && Auth.profile?.company_id) || state.company?.company_id || 'comp-local';
+  const role = (typeof Auth !== 'undefined' && Auth.profile?.role) || state.company?.role || 'company_manager';
   return {
-    company_id: state.company?.company_id || 'comp-local',
-    user_id: state.company?.user_id || 'user-local',
-    role: state.company?.role || 'company_manager',
+    company_id: companyId,
+    user_id: userId,
+    role,
     manager_id: state.company?.user_id || 'user-local',
     team_id: state.company?.team_id || 'team-local',
     created_by: state.company?.user_id || 'user-local',
@@ -87,12 +98,38 @@ function metaFields(overrides = {}) {
   };
 }
 
+let saveCloudTimer;
+
 function saveState() {
-  // [SUPABASE] Substituir por upsert nas tabelas correspondentes com RLS por company_id
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
     showToast('Erro ao salvar dados. Espaço insuficiente?', 'error');
+  }
+  if (typeof Auth !== 'undefined' && Auth.isApproved?.()) {
+    clearTimeout(saveCloudTimer);
+    saveCloudTimer = setTimeout(() => Auth.saveAppData(state), 1500);
+  }
+}
+
+async function loadStateForUser() {
+  if (typeof Auth !== 'undefined' && Auth.isApproved?.() && Auth.profile?.company_id) {
+    const cloud = await Auth.loadAppData();
+    if (cloud) {
+      state = cloud;
+      normalizeState();
+      return;
+    }
+  }
+  await loadState();
+  if (typeof Auth !== 'undefined' && Auth.user) {
+    if (!state.company) state.company = {};
+    state.company.user_id = Auth.user.id;
+    if (Auth.profile?.company_id) {
+      state.company.company_id = Auth.profile.company_id;
+      state.company.supabase_id = Auth.profile.company_id;
+    }
+    if (Auth.profile?.role) state.company.role = Auth.profile.role;
   }
 }
 
@@ -101,12 +138,29 @@ async function loadState() {
   if (stored) {
     try { state = JSON.parse(stored); return; } catch (e) { /* fallback */ }
   }
+  state = { company: {}, employees: [], manager_inputs: [], timeline: [], challenges: [], compass_materials: [] };
+}
+
+async function loadDemoData() {
   try {
     const res = await fetch('data.json');
     if (res.ok) state = await res.json();
   } catch (e) {
-    console.warn('data.json não carregado, usando estado vazio.');
+    console.warn('data.json não carregado.');
   }
+}
+
+function isOnboardingComplete() {
+  return localStorage.getItem(getOnboardingKey()) === 'true';
+}
+
+function normalizeState() {
+  if (!state.company) state.company = {};
+  if (!state.employees) state.employees = [];
+  if (!state.manager_inputs) state.manager_inputs = [];
+  if (!state.timeline) state.timeline = [];
+  if (!state.challenges) state.challenges = [];
+  if (!state.compass_materials) state.compass_materials = [];
 }
 
 // [SUPABASE] Filtrar todos os dados por company_id do usuário autenticado
@@ -263,7 +317,8 @@ function renderSection(sec) {
     dashboard: renderDashboard, company: renderCompany, employees: renderEmployees,
     gallery: renderGallery, inputs: renderInputs, timeline: renderTimeline,
     challenges: renderChallenges, compass: renderCompass, nr1: renderNR1,
-    summary: () => {}, governance: renderGovernance, data: () => {}
+    summary: () => {}, governance: renderGovernance, data: () => {},
+    access: () => { if (typeof loadAccessAdminPanel === 'function') loadAccessAdminPanel(); }
   };
   if (map[sec]) map[sec]();
 }
@@ -331,6 +386,14 @@ function saveCompany() {
   state.company.updated_at = nowISO();
   saveState();
   applyTheme();
+  if (typeof Auth !== 'undefined' && Auth.isApproved?.()) {
+    Auth.saveCompanyToSupabase(state.company).then(row => {
+      if (row?.id) {
+        state.company.supabase_id = row.id;
+        state.company.company_id = row.id;
+      }
+    }).catch(err => console.warn('Sync empresa:', err.message));
+  }
 }
 
 // ─── Dashboard ─────────────────────────────────────────────────
@@ -1265,43 +1328,162 @@ document.getElementById('btn-clear-data').addEventListener('click', () => {
   if (!confirm('ATENÇÃO: Isso apagará TODOS os dados do navegador. Deseja continuar?')) return;
   if (!confirm('Confirma a exclusão permanente?')) return;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ONBOARDING_KEY);
   location.reload();
 });
 
 document.getElementById('btn-restore-demo').addEventListener('click', async () => {
   if (!confirm('Restaurar dados de demonstração? Dados atuais serão substituídos.')) return;
   localStorage.removeItem(STORAGE_KEY);
-  await loadState();
+  await loadDemoData();
+  normalizeState();
+  localStorage.setItem(ONBOARDING_KEY, 'true');
   saveState(); applyTheme();
   renderSection(document.querySelector('.nav-item.active').dataset.section);
   showToast('Dados de demonstração restaurados!');
 });
 
-// ─── Inicialização ─────────────────────────────────────────────
+// ─── Onboarding / Cadastro inicial ─────────────────────────────
 
-async function init() {
-  await loadState();
-  if (!state.company) state.company = {};
-  if (!state.employees) state.employees = [];
-  if (!state.manager_inputs) state.manager_inputs = [];
-  if (!state.timeline) state.timeline = [];
-  if (!state.challenges) state.challenges = [];
-  if (!state.compass_materials) state.compass_materials = [];
+function showOnboarding() {
+  document.getElementById('onboarding-screen').hidden = false;
+  document.getElementById('app').classList.add('app-hidden');
+}
 
-  if (typeof Chart !== 'undefined') {
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = 'rgba(56, 189, 248, 0.1)';
-  }
+function hideOnboarding() {
+  document.getElementById('onboarding-screen').hidden = true;
+  document.getElementById('app').classList.remove('app-hidden');
+}
 
+function finishOnboarding() {
+  localStorage.setItem(getOnboardingKey(), 'true');
+  hideOnboarding();
+  launchApp();
+  showToast('Cadastro concluído! Bem-vindo ao People Management 2.0.');
+}
+
+function updateUserHeader() {
+  const wrap = document.getElementById('header-user');
+  const emailEl = document.getElementById('header-user-email');
+  if (!wrap || typeof Auth === 'undefined' || !Auth.user) return;
+  wrap.hidden = false;
+  if (emailEl) emailEl.textContent = Auth.profile?.full_name || Auth.user.email;
+}
+
+function launchApp() {
+  document.getElementById('app')?.classList.remove('app-hidden');
+  startApp();
+  if (typeof renderAccessAdmin === 'function') renderAccessAdmin();
+  updateUserHeader();
+}
+
+function initOnboarding() {
+  document.getElementById('ob-company-logo')?.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('ob-logo-preview').innerHTML = `<img src="${ev.target.result}" alt="Logo">`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('onboarding-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('ob-company-name').value.trim();
+    const manager = document.getElementById('ob-manager-name').value.trim();
+    if (!name || !manager) {
+      showToast('Preencha empresa e gestor responsável.', 'error');
+      return;
+    }
+    if (!state.company) state.company = {};
+    state.company = {
+      ...metaFields({ company_id: generateId('comp') }),
+      name,
+      manager_name: manager,
+      team_name: document.getElementById('ob-team-name').value.trim(),
+      primary_color: document.getElementById('ob-primary-color').value,
+      logo: document.getElementById('ob-logo-preview').querySelector('img')?.src || null,
+      onboarding_complete: true
+    };
+    saveState();
+    if (typeof Auth !== 'undefined' && Auth.isApproved?.()) {
+      try {
+        const row = await Auth.saveCompanyToSupabase(state.company);
+        if (row?.id) {
+          state.company.supabase_id = row.id;
+          state.company.company_id = row.id;
+          saveState();
+        }
+      } catch (err) {
+        showToast('Empresa salva localmente. Erro na nuvem: ' + err.message, 'error');
+      }
+    }
+    finishOnboarding();
+  });
+
+  document.getElementById('btn-onboarding-demo').addEventListener('click', async () => {
+    await loadDemoData();
+    normalizeState();
+    saveState();
+    finishOnboarding();
+  });
+}
+
+function startApp() {
   applyTheme();
   initNavigation();
   initCompanyForm();
   renderDashboard();
   renderGovernance();
+}
 
-  // [SUPABASE] Inicializar cliente Supabase, verificar sessão e carregar dados filtrados por company_id
+// ─── Inicialização ─────────────────────────────────────────────
+
+async function continueAfterAuth() {
+  await loadStateForUser();
+  normalizeState();
+  initOnboarding();
+
+  if (!isOnboardingComplete()) {
+    showOnboarding();
+    return;
+  }
+
+  launchApp();
+}
+
+async function continueWithoutAuth() {
+  await loadState();
+  normalizeState();
+  initOnboarding();
+
+  if (!isOnboardingComplete()) {
+    showOnboarding();
+    console.log('People Management 2.0 — Aguardando cadastro inicial.');
+    return;
+  }
+
+  launchApp();
+  console.log('People Management 2.0 — Pronto (modo local).');
+}
+
+async function init() {
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(56, 189, 248, 0.1)';
+  }
+
   initTechBackground();
-  console.log('People Management 2.0 — Pronto.');
+
+  if (typeof Auth === 'undefined' || !Auth.isConfigured()) {
+    console.warn('Supabase não configurado — modo local sem login.');
+    await continueWithoutAuth();
+    return;
+  }
+
+  window.onAuthReady = continueAfterAuth;
+  await initAuth();
 }
 
 /** Rede de partículas conectadas — efeito tech no fundo */

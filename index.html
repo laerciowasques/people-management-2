@@ -28,8 +28,118 @@
     <div class="tech-bg-vignette"></div>
   </div>
 
-  <!-- SUPABASE: Autenticação e sessão do usuário serão verificadas aqui -->
-  <div id="app">
+  <!-- Autenticação Supabase -->
+  <div id="auth-screen" class="auth-screen" hidden>
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-icon onboarding-brand-icon">PM</div>
+        <div>
+          <h1>People Management 2.0</h1>
+          <p>Acesso restrito — gestores autorizados</p>
+        </div>
+      </div>
+      <div id="auth-config-warning" class="auth-warning" hidden>
+        Configure SUPABASE_URL e SUPABASE_ANON_KEY no Vercel para habilitar o login.
+      </div>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">Entrar</button>
+        <button type="button" class="auth-tab" data-tab="signup">Solicitar acesso</button>
+      </div>
+      <div id="auth-error" class="auth-error" hidden></div>
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="login-email">E-mail</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Senha</label>
+          <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-login">Entrar</button>
+      </form>
+      <form id="signup-form" class="auth-form" hidden>
+        <div class="form-group">
+          <label for="signup-name">Nome completo</label>
+          <input type="text" id="signup-name" placeholder="Seu nome" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="signup-email">E-mail</label>
+          <input type="email" id="signup-email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Senha (mín. 6 caracteres)</label>
+          <input type="password" id="signup-password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+        </div>
+        <p class="auth-hint">Novos cadastros são analisados por <strong>laercio_wasques@yahoo.com.br</strong> antes da liberação.</p>
+        <button type="submit" class="btn btn-primary btn-lg" id="btn-signup">Solicitar acesso</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="pending-screen" class="auth-screen pending-screen" hidden>
+    <div class="auth-card auth-card-narrow">
+      <div class="auth-status-icon">⏳</div>
+      <h2>Aguardando aprovação</h2>
+      <p id="pending-message">Seu cadastro foi recebido. O administrador irá analisar e liberar seu acesso em breve.</p>
+      <p class="auth-hint">Administrador: laercio_wasques@yahoo.com.br</p>
+      <button type="button" class="btn btn-secondary" id="btn-pending-logout">Sair</button>
+    </div>
+  </div>
+
+  <div id="rejected-screen" class="auth-screen rejected-screen" hidden>
+    <div class="auth-card auth-card-narrow">
+      <div class="auth-status-icon">🚫</div>
+      <h2>Acesso não autorizado</h2>
+      <p id="rejected-reason">Seu acesso não foi autorizado. Entre em contato com o administrador.</p>
+      <p class="auth-hint">laercio_wasques@yahoo.com.br</p>
+      <button type="button" class="btn btn-secondary" id="btn-rejected-logout">Sair</button>
+    </div>
+  </div>
+
+  <div id="onboarding-screen" class="onboarding-screen" hidden>
+    <div class="onboarding-card">
+      <div class="onboarding-brand">
+        <div class="brand-icon onboarding-brand-icon">PM</div>
+        <div>
+          <h1>People Management 2.0</h1>
+          <p>Configure sua empresa para começar a gestão do time</p>
+        </div>
+      </div>
+      <form id="onboarding-form" class="onboarding-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="ob-company-name">Nome da Empresa *</label>
+            <input type="text" id="ob-company-name" placeholder="Ex: Minha Empresa Ltda." required>
+          </div>
+          <div class="form-group">
+            <label for="ob-manager-name">Gestor Responsável *</label>
+            <input type="text" id="ob-manager-name" placeholder="Ex: Seu nome completo" required>
+          </div>
+          <div class="form-group">
+            <label for="ob-team-name">Área / Time</label>
+            <input type="text" id="ob-team-name" placeholder="Ex: Gestão de Pessoas">
+          </div>
+          <div class="form-group">
+            <label for="ob-primary-color">Cor Principal</label>
+            <input type="color" id="ob-primary-color" value="#3b82f6">
+          </div>
+          <div class="form-group full-width">
+            <label for="ob-company-logo">Logo da Empresa (opcional)</label>
+            <input type="file" id="ob-company-logo" accept="image/*">
+            <div id="ob-logo-preview" class="logo-preview"></div>
+          </div>
+        </div>
+        <p class="onboarding-hint">Configure sua empresa. Os dados são salvos na nuvem (Supabase) e sincronizados com este navegador.</p>
+        <div class="onboarding-actions">
+          <button type="submit" class="btn btn-primary btn-lg">Iniciar People Management 2.0</button>
+          <button type="button" class="btn btn-secondary" id="btn-onboarding-demo">Explorar com dados de demonstração</button>
+        </div>
+      </form>
+      <p class="onboarding-footer-note">Ferramenta desenvolvida para gestores da Bússola Executiva · Uso gerencial e de desenvolvimento</p>
+    </div>
+  </div>
+
+  <div id="app" class="app-hidden">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">PM</div>
@@ -110,6 +220,9 @@
           <a href="#" class="nav-item" data-section="data">
             <span class="nav-icon">💾</span><span>Dados & Backup</span>
           </a>
+          <a href="#" class="nav-item" data-section="access" id="nav-access-admin" hidden>
+            <span class="nav-icon">🔐</span><span>Gestão de Acesso</span>
+          </a>
           </div>
         </div>
       </div>
@@ -135,6 +248,10 @@
         </div>
       </div>
       <div class="header-actions">
+        <div class="header-user" id="header-user" hidden>
+          <span class="header-user-email" id="header-user-email"></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-logout">Sair</button>
+        </div>
         <button class="btn btn-primary btn-sm" id="btn-quick-summary">Síntese Rápida</button>
       </div>
     </header>
@@ -348,6 +465,17 @@
         <div class="governance-grid" id="governance-grid"></div>
       </section>
 
+      <!-- GESTÃO DE ACESSO (admin) -->
+      <section id="section-access" class="section">
+        <div class="section-header">
+          <h2>Gestão de Acesso</h2>
+          <p class="section-subtitle">Aprovar ou recusar solicitações de novos usuários na plataforma</p>
+        </div>
+        <div class="card">
+          <div id="access-admin-list"></div>
+        </div>
+      </section>
+
       <!-- DADOS -->
       <section id="section-data" class="section">
         <div class="section-header">
@@ -402,6 +530,9 @@
   <!-- TOAST -->
   <div id="toast-container" class="toast-container"></div>
 
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
