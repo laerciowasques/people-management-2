@@ -303,6 +303,19 @@ function showScreen(id) {
   });
 }
 
+function mapAuthError(err) {
+  const msg = (err?.message || '').toLowerCase();
+  if (msg.includes('rate limit') || msg.includes('email rate limit'))
+    return 'Limite de e-mails atingido. Aguarde cerca de 1 hora ou confirme o usuário manualmente no Supabase (Authentication → Users).';
+  if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already registered'))
+    return 'Este e-mail já está cadastrado. Use a aba Entrar com sua senha.';
+  if (msg.includes('invalid login credentials'))
+    return 'E-mail ou senha incorretos.';
+  if (msg.includes('email not confirmed'))
+    return 'E-mail ainda não confirmado. Verifique spam ou peça ao admin para confirmar em Supabase → Users.';
+  return err?.message || 'Erro inesperado. Tente novamente.';
+}
+
 function setAuthError(msg) {
   const el = document.getElementById('auth-error');
   const ok = document.getElementById('auth-success');
@@ -415,9 +428,7 @@ function initAuthUI() {
       );
       await handleAuthSuccess();
     } catch (err) {
-      setAuthError(err.message === 'Invalid login credentials'
-        ? 'E-mail ou senha incorretos.'
-        : (err.message || 'Erro ao entrar.'));
+      setAuthError(mapAuthError(err));
     } finally {
       btn.disabled = false;
     }
@@ -448,7 +459,7 @@ function initAuthUI() {
       await Auth.refresh();
       await handleAuthSuccess();
     } catch (err) {
-      setAuthError(err.message || 'Erro ao cadastrar.');
+      setAuthError(mapAuthError(err));
     } finally {
       btn.disabled = false;
     }
@@ -469,7 +480,7 @@ function initAuthUI() {
       setAuthSuccess('Link enviado! Verifique sua caixa de entrada (e spam) e clique no link para definir uma nova senha.');
       document.getElementById('forgot-form').reset();
     } catch (err) {
-      setAuthError(err.message || 'Erro ao enviar link de recuperação.');
+      setAuthError(mapAuthError(err));
     } finally {
       btn.disabled = false;
     }
@@ -526,7 +537,7 @@ function initAuthUI() {
       await Auth.resendSignupConfirmation(email);
       if (statusEl) statusEl.textContent = 'E-mail reenviado! Verifique spam/lixo eletrônico.';
     } catch (err) {
-      if (statusEl) statusEl.textContent = err.message || 'Erro ao reenviar. Tente novamente em alguns minutos.';
+      if (statusEl) statusEl.textContent = mapAuthError(err);
     } finally {
       btn.disabled = false;
     }
