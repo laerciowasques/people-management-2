@@ -11,7 +11,17 @@ const Auth = {
   profile: null,
 
   isConfigured() {
-    return !!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY);
+    const url = (window.SUPABASE_URL || '').trim();
+    const key = (window.SUPABASE_ANON_KEY || '').trim();
+    if (!url || !key) return false;
+
+    const invalid = /project url|settings → api|chave anon|seu-projeto|sua-anon/i;
+    if (invalid.test(url) || invalid.test(key)) return false;
+    if (key.startsWith('http')) return false;
+
+    const urlOk = /^https:\/\/[\w-]+\.supabase\.co\/?$/i.test(url);
+    const keyOk = key.startsWith('eyJ') || key.startsWith('sb_publishable_') || key.length >= 32;
+    return urlOk && keyOk;
   },
 
   init() {
@@ -457,28 +467,35 @@ window.rejectUserAccess = async function(userId) {
 };
 
 async function initAuth() {
-  if (!Auth.isConfigured()) {
-    document.getElementById('auth-config-warning').hidden = false;
+  try {
+    if (!Auth.isConfigured()) {
+      document.getElementById('auth-config-warning').hidden = false;
+      showAuthScreen();
+      setAuthError('Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no Vercel.');
+      return false;
+    }
+
+    if (!Auth.init()) {
+      showAuthScreen();
+      setAuthError('Erro ao inicializar Supabase.');
+      return false;
+    }
+
+    initAuthUI();
+
+    const session = await Auth.getSession();
+    if (session) {
+      Auth.user = session.user;
+      await handleAuthSuccess();
+      return true;
+    }
+
     showAuthScreen();
-    setAuthError('Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no Vercel.');
+    return false;
+  } catch (err) {
+    console.error('initAuth:', err);
+    showAuthScreen();
+    setAuthError('Erro ao conectar ao Supabase. Verifique URL e chave no Vercel.');
     return false;
   }
-
-  if (!Auth.init()) {
-    showAuthScreen();
-    setAuthError('Erro ao inicializar Supabase.');
-    return false;
-  }
-
-  initAuthUI();
-
-  const session = await Auth.getSession();
-  if (session) {
-    Auth.user = session.user;
-    await handleAuthSuccess();
-    return true;
-  }
-
-  showAuthScreen();
-  return false;
 }

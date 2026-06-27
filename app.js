@@ -1476,14 +1476,19 @@ async function init() {
 
   initTechBackground();
 
-  if (typeof Auth === 'undefined' || !Auth.isConfigured()) {
-    console.warn('Supabase não configurado — modo local sem login.');
-    await continueWithoutAuth();
-    return;
-  }
+  try {
+    if (typeof Auth === 'undefined' || !Auth.isConfigured()) {
+      console.warn('Supabase não configurado — modo local sem login.');
+      await continueWithoutAuth();
+      return;
+    }
 
-  window.onAuthReady = continueAfterAuth;
-  await initAuth();
+    window.onAuthReady = continueAfterAuth;
+    await initAuth();
+  } catch (err) {
+    console.error('init:', err);
+    await continueWithoutAuth();
+  }
 }
 
 /** Rede de partículas conectadas — efeito tech no fundo */
